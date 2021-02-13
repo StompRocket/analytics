@@ -7,8 +7,14 @@ var uaParser = require('ua-parser-js');
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/analyticsDB?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true });
-client.connect(err => {
-  const DBviews = client.db("analyticsDB").collection("views");
+
+function logView(view) {
+  client.connect(err => {
+    const DBviews = client.db("analyticsDB").collection("views");
+    DBviews.insertOne(view)
+    client.close();
+});
+}
   // perform actions on the collection object
   const init = async () => {
 
@@ -88,7 +94,7 @@ client.connect(err => {
                 }
             }
             console.log(data)
-            DBviews.insertOne(data)
+            logView(data)
             });
           
 
@@ -107,5 +113,3 @@ process.on('unhandledRejection', (err) => {
 });
 
 init();
-  //client.close();
-});
