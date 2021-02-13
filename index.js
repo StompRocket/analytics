@@ -8,10 +8,10 @@ const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/analyticsDB?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true });
 
-function logView(view) {
-  client.connect(err => {
+ function logView(view)  {
+  client.connect(async err => {
     const DBviews = client.db("analyticsDB").collection("views");
-    DBviews.insertOne(view)
+   await DBviews.insertOne(view)
     client.close();
 });
 }
