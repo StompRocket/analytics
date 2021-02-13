@@ -69,7 +69,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
             fetch('http://ipwhois.app/json/' + ip)
             .then(res => res.json())
             .then(json => {
-              console.log(json["completed_requests"], request.info.host)
+              console.log(json["completed_requests"], request.info.host, request.headers))
               const data = {
                 propertyID: "propertyID",
                 pageurl: clientData[0],
