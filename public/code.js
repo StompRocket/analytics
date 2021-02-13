@@ -1,1 +1,1 @@
-let d=[window.location.href,new Date().toISOString(),document.referrer,navigator["language"],navigator["platform"],window.screen.width,window.screen.height],x=new XMLHttpRequest();x.open('POST',"https://a.stomprocket.io/api/view");x.setRequestHeader('Content-Type','text/plain');x.send(d);
+let s=function(){let e=[window.location.href,new Date().toISOString(),document.referrer,navigator.language,navigator.platform,window.screen.width,window.screen.height],n=new XMLHttpRequest;console.log("send",e)};s(),window.onpopstate=function(){s()};

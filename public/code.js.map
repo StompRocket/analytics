@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../src/code.js"],
+  "sourcesContent": ["let s = function () {\nlet d = [window.location.href, new Date().toISOString(), document.referrer, navigator[\"language\"], navigator[\"platform\"], window.screen.width, window.screen.height], x = new XMLHttpRequest();\n\n/*x.open('POST', \"https://a.stomprocket.io/api/view\");\nx.setRequestHeader('Content-Type', 'text/plain');\nx.send(d);*/\nconsole.log(\"send\", d)\n}\ns()\nwindow.onpopstate = function() {s()}\n"],
+  "mappings": "AAAA,GAAI,GAAI,WACR,GAAI,GAAI,CAAC,OAAO,SAAS,KAAM,GAAI,QAAO,cAAe,SAAS,SAAU,UAAU,SAAa,UAAU,SAAa,OAAO,OAAO,MAAO,OAAO,OAAO,QAAS,EAAI,GAAI,gBAK9K,QAAQ,IAAI,OAAQ,IAEpB,IACA,OAAO,WAAa,WAAY",
+  "names": []
+}
