@@ -13,7 +13,7 @@ client.connect(err => {
   const init = async () => {
 
     const server = Hapi.server({
-        port: 3000,
+        port: 3056,
         host: 'localhost',
         routes: {
             files: {
