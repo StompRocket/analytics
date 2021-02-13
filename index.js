@@ -6,9 +6,10 @@ const keys = require('./private/keys.json')
 var uaParser = require('ua-parser-js');
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/analyticsDB?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true });
+
 
  function logView(view)  {
+  const client = new MongoClient(uri, { useNewUrlParser: true });
   client.connect(async err => {
     const DBviews = client.db("analyticsDB").collection("views");
    await DBviews.insertOne(view)
