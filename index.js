@@ -50,7 +50,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
         path: '/script',
         handler: function(request, h) {
 
-            return h.file('script.js');
+            return h.file('code.js');
         }
     });
 
@@ -69,7 +69,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
             fetch('http://ipwhois.app/json/' + ip)
             .then(res => res.json())
             .then(json => {
-              console.log(json["completed_requests"], request.info.host, request.headers)
+              console.log(json["completed_requests"], request.info.host)
               const data = {
                 propertyID: "propertyID",
                 pageurl: clientData[0],
