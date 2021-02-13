@@ -4,7 +4,6 @@ let d = [w.location.href, new Date().toISOString(), r || document.referrer, navi
 x.open('POST', "https://a.stomprocket.io/api/view");
 x.setRequestHeader('Content-Type', 'text/plain');
 x.send(d);
-console.log("send", d)
 }
 
 s()
