@@ -25,7 +25,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
         routes: {
           "cors": true,
             files: {
-                relativeTo: Path.join(__dirname, 'public')
+                relativeTo: Path.join(__dirname)
             }
         }
     });
@@ -35,7 +35,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
         path: '/',
         handler: function(request, h) {
 
-            return h.file('testpage.html');
+            return h.file('public/testpage.html');
         }
     });
     server.route({
@@ -43,7 +43,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
         path: '/test',
         handler: function(request, h) {
 
-            return h.file('testpage.html');
+            return h.file('public/testpage.html');
         }
     });
     server.route({
@@ -51,7 +51,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
         path: '/script',
         handler: function(request, h) {
 
-            return h.file('code.js');
+            return h.file('src/code.js');
         }
     });
 
