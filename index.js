@@ -23,7 +23,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
         port: 3056,
         host: 'localhost',
         routes: {
-          "cors": true
+          "cors": true,
             files: {
                 relativeTo: Path.join(__dirname, 'public')
             }
