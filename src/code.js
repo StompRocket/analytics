@@ -6,4 +6,4 @@ x.send(d);
 console.log("send", d)
 }
 s()
-window.onpopstate = function() {s()}
+window.onpopstate = history.onpushstate = function() {s()}
