@@ -57,7 +57,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
 
     server.route({
         method: 'POST',
-        path: '/api/view',
+        path: '/api/v1/view',
         handler: (request, h) => {
             //console.log("info")
            // console.log(request.info)
