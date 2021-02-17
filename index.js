@@ -6,7 +6,13 @@ const keys = require('./private/keys.json')
 var uaParser = require('ua-parser-js');
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/analyticsDB?retryWrites=true&w=majority`;
+var admin = require("firebase-admin");
 
+var serviceAccount = require("./private/fb.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
  function logView(view)  {
   const client = new MongoClient(uri, { useNewUrlParser: true });
@@ -37,7 +43,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
 
             return h.file('public/testpage.html');
         }
-    });
+    }); // /
     server.route({
         method: 'GET',
         path: '/test',
@@ -45,7 +51,7 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
 
             return h.file('public/testpage.html');
         }
-    });
+    }); // /test
     server.route({
         method: 'GET',
         path: '/script',
@@ -53,16 +59,11 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
 
             return h.file('src/code.js');
         }
-    });
-
+    }); // /script
     server.route({
         method: 'POST',
         path: '/api/v1/view',
         handler: (request, h) => {
-            //console.log("info")
-           // console.log(request.info)
-            //console.log("headers")
-           // console.log(request.headers)
             const xFF = request.headers['x-forwarded-for']
             const ip = xFF ? xFF.split(',')[0] : request.info.remoteAddress
             const clientData = request.payload.split(',')
@@ -102,7 +103,9 @@ const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/ana
 
             return true
         }
-    });
+    });  // /api/v1/view
+
+
 
     await server.start();
     console.log('Server running on %s', server.info.uri);
