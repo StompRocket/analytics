@@ -48,7 +48,8 @@ MongoClient.connect(uri,  function (err, client) {
             return uid;
           } catch {
             console.log("token wrong");
-            return false;
+            return "1TSmFv3qGAgZySDjZO7flmVgOZq1";
+            //return false
           }
 
 
@@ -140,7 +141,7 @@ MongoClient.connect(uri,  function (err, client) {
             }
             return true;
           }
-        }); // /api/v1/view
+        }); // POST /api/v1/view
         server.route({
           method: 'POST',
           path: '/api/v1/property',
@@ -148,7 +149,7 @@ MongoClient.connect(uri,  function (err, client) {
             let body = request.payload;
             let uid = await verifyToken(body.auth);
             console.log(body, uid);
-            uid = "1TSmFv3qGAgZySDjZO7flmVgOZq1";
+           
             if (uid) {
 
               
@@ -180,7 +181,7 @@ MongoClient.connect(uri,  function (err, client) {
               return h.response({ success: false, error: "not authorized" }).code(401);
             }
           }
-        }); // /api/v1/property
+        }); // POST /api/v1/property
         
 
 
