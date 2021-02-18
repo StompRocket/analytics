@@ -2,6 +2,7 @@
 let s = function (r) {
 let d = [w.location.href, new Date().toISOString(), r || document.referrer, navigator["language"], navigator["platform"], w.screen.width, w.screen.height], x = new XMLHttpRequest();
 x.open('POST', "https://a.stomprocket.io/api/v1/view");
+//x.open('POST', "/api/v1/view");
 x.setRequestHeader('Content-Type', 'text/plain');
 x.send(d);
 }

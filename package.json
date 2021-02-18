@@ -24,6 +24,7 @@
     "firebase-admin": "^9.5.0",
     "mongodb": "^3.6.4",
     "node-fetch": "^2.6.1",
-    "ua-parser-js": "^0.7.24"
+    "ua-parser-js": "^0.7.24",
+    "uuid": "^8.3.2"
   }
 }
