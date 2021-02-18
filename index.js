@@ -104,7 +104,14 @@ admin.initializeApp({
             return true
         }
     });  // /api/v1/view
-
+    server.route({
+        method: 'POST',
+        path: '/api/v1/property',
+        handler: (request, h) => {
+            let body = request.payload
+            
+        }
+    })
 
 
     await server.start();
