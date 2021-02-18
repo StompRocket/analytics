@@ -196,7 +196,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
             }
-        }); // GET /api/v1/property
+        }); // POST /api/v1/property
         server.route({
             method: 'POST',
             path: '/api/v1/data/{propertyID}',
@@ -232,7 +232,8 @@ MongoClient.connect(uri, function (err, client) {
                             return h.response({
                                 success: true,
                                 id: request.params.propertyID,
-                                data: data
+                                data: data,
+                                count: data.length
                             }).code(200);
                         } else {
                             return h.response({
