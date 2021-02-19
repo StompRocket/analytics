@@ -202,11 +202,11 @@ MongoClient.connect(uri, function (err, client) {
             path: '/api/v1/data/{propertyID}',
             handler: async function (request, h) {
                 let body = request.payload;
-                 if (!body || !body.auth) { 
-                     return h.response({
-                                success: false,
-                                error: "not authorized"
-                            }).code(401);
+                if (!body || !body.auth) {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
@@ -273,11 +273,11 @@ MongoClient.connect(uri, function (err, client) {
             path: '/api/v1/data/{propertyID}/pages',
             handler: async function (request, h) {
                 let body = request.payload;
-                if (!body || !body.auth) { 
-                     return h.response({
-                                success: false,
-                                error: "not authorized"
-                            }).code(401);
+                if (!body || !body.auth) {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
@@ -308,12 +308,14 @@ MongoClient.connect(uri, function (err, client) {
                                     success: true,
                                     id: request.params.propertyID,
                                     from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                    to: body.to || new Date().toISOString(),
                                     data: [],
-                                    count: 0
+                                    count: 0,
+                                    totalViews: 0
                                 }).code(200);
                             }
                             let pagesOBJ = {}
+                            let totalViews = 0
                             data.forEach(view => {
                                 let url = getURLComponents(view.pageurl)
                                 if (pagesOBJ[url.page]) {
@@ -324,10 +326,11 @@ MongoClient.connect(uri, function (err, client) {
                                         count: 1
                                     }
                                 }
+                                totalViews++
 
                             })
                             let pages = []
-                            Object.keys(pagesOBJ).forEach(key => { 
+                            Object.keys(pagesOBJ).forEach(key => {
                                 pages.push({
                                     path: key,
                                     views: pagesOBJ[key].count
@@ -337,10 +340,11 @@ MongoClient.connect(uri, function (err, client) {
                                 success: true,
                                 from: body.from || new Date(2021, 1, 1).toISOString(),
                                 to: body.to || new Date().toISOString(),
-                                    id: request.params.propertyID,
-                                    data: pages,
-                                    count: pages.length
-                                }).code(200);
+                                id: request.params.propertyID,
+                                data: pages,
+                                count: pages.length,
+                                totalViews: totalViews
+                            }).code(200);
 
                         } else {
                             return h.response({
@@ -370,7 +374,119 @@ MongoClient.connect(uri, function (err, client) {
                 }
             }
         }); // POST /api/v1/data/{property id}/pages
+        server.route({
+            method: 'POST',
+            path: '/api/v1/data/{propertyID}/refferers',
+            handler: async function (request, h) {
+                let body = request.payload;
+                if (!body || !body.auth) {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+                let uid = await verifyToken(body.auth);
+                console.log(request.params.propertyID, uid);
+                if (uid) {
+                    let existing = await propertiesDB.find({
+                        "_id": request.params.propertyID
+                    }).toArray();
+                    console.log(existing)
+                    if (existing.length > 0) {
+                        let property = existing[0]
+                        if (property.access.indexOf(uid) > -1) {
+                            const dataDB = client.db("analyticsDB").collection("views");
+                            let data = [];
+                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
+                            try {
+                                data = await dataDB.find({
+                                    "propertyID": request.params.propertyID,
+                                    time: {
+                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
+                                        $lt: body.to || new Date().toISOString()
+                                    }
+                                }).toArray()
+                            } catch {
+                                data = []
+                            }
+                            if (data.length == 0) {
+                                return h.response({
+                                    success: true,
+                                    id: request.params.propertyID,
+                                    from: body.from || new Date(2021, 1, 1).toISOString(),
+                                    to: body.to || new Date().toISOString(),
+                                    data: [],
+                                    count: 0,
+                                    totalViews: 0
+                                }).code(200);
+                            }
+                            let pagesOBJ = {}
+                            let totalViews = 0
+                            data.forEach(view => {
+                                if (view.refferer && view.refferer.length > 1) {
+                                    let url = getURLComponents(view.refferer)
+                                    //console.log(url.hostname, property.domain)
+                                if (url.hostname != property.domain && url.url.length > 1) {
+                                    if (pagesOBJ[view.refferer]) {
+                                        pagesOBJ[view.refferer].count++
+                                    } else {
+                                        pagesOBJ[view.refferer] = {
+                                            url: view.refferer,
+                                            count: 1
+                                        }
+                                    }
+                                    totalViews++
+                                }
+                                }
+                               
 
+
+                            })
+                            let pages = []
+                            Object.keys(pagesOBJ).forEach(key => {
+                                pages.push({
+                                    path: key,
+                                    views: pagesOBJ[key].count
+                                })
+                            })
+                            return h.response({
+                                success: true,
+                                from: body.from || new Date(2021, 1, 1).toISOString(),
+                                to: body.to || new Date().toISOString(),
+                                id: request.params.propertyID,
+                                data: pages,
+                                count: pages.length,
+                                totalViews: totalViews
+                            }).code(200);
+
+                        } else {
+                            return h.response({
+                                success: false,
+                                error: "not authorized"
+                            }).code(401);
+                        }
+
+
+
+                    } else {
+                        return h.response({
+                            success: false,
+                            error: "property doesn't exist"
+                        }).code(401);
+
+
+                    }
+
+
+
+                } else {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+            }
+        }); // POST /api/v1/data/{property id}/refferers
         await server.start();
         console.log('Server running on %s', server.info.uri);
 
