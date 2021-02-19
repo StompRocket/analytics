@@ -111,7 +111,7 @@ MongoClient.connect(uri, function (err, client) {
                     fetch('http://ipwhois.app/json/' + ip)
                         .then(res => res.json())
                         .then(async json => {
-                            console.log(json["completed_requests"], ip, request.info.host);
+                            console.log(json["completed_requests"], request.info.host);
                             const data = {
                                 propertyID: existing[0]["_id"],
                                 pageurl: clientData[0],
