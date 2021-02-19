@@ -202,6 +202,12 @@ MongoClient.connect(uri, function (err, client) {
             path: '/api/v1/data/{propertyID}',
             handler: async function (request, h) {
                 let body = request.payload;
+                 if (!body || !body.auth) { 
+                     return h.response({
+                                success: false,
+                                error: "not authorized"
+                            }).code(401);
+                }
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
@@ -214,7 +220,7 @@ MongoClient.connect(uri, function (err, client) {
                         if (property.access.indexOf(uid) > -1) {
                             const dataDB = client.db("analyticsDB").collection("views");
                             let data = [];
-                           // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
+                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
                             try {
                                 data = await dataDB.find({
                                     "propertyID": request.params.propertyID,
@@ -229,6 +235,8 @@ MongoClient.connect(uri, function (err, client) {
                             return h.response({
                                 success: true,
                                 id: request.params.propertyID,
+                                from: body.from || new Date(2021, 1, 1).toISOString(),
+                                to: body.to || new Date().toISOString(),
                                 data: data,
                                 count: data.length
                             }).code(200);
@@ -260,11 +268,17 @@ MongoClient.connect(uri, function (err, client) {
                 }
             }
         }); // POST /api/v1/data/{property id}
-  server.route({
+        server.route({
             method: 'POST',
             path: '/api/v1/data/{propertyID}/pages',
             handler: async function (request, h) {
                 let body = request.payload;
+                if (!body || !body.auth) { 
+                     return h.response({
+                                success: false,
+                                error: "not authorized"
+                            }).code(401);
+                }
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
@@ -277,7 +291,7 @@ MongoClient.connect(uri, function (err, client) {
                         if (property.access.indexOf(uid) > -1) {
                             const dataDB = client.db("analyticsDB").collection("views");
                             let data = [];
-                           // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
+                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
                             try {
                                 data = await dataDB.find({
                                     "propertyID": request.params.propertyID,
@@ -289,23 +303,45 @@ MongoClient.connect(uri, function (err, client) {
                             } catch {
                                 data = []
                             }
-                            if (data.length == 0){
-                            return h.response({
-                                success: true,
-                                id: request.params.propertyID,
-                                data: [],
-                                count: data.length
-                            }).code(200);
+                            if (data.length == 0) {
+                                return h.response({
+                                    success: true,
+                                    id: request.params.propertyID,
+                                    from: body.from || new Date(2021, 1, 1).toISOString(),
+                                to: body.to || new Date().toISOString(),
+                                    data: [],
+                                    count: 0
+                                }).code(200);
                             }
                             let pagesOBJ = {}
                             data.forEach(view => {
                                 let url = getURLComponents(view.pageurl)
-                                pagesOBJ[url.page] = {
-                                    url: view.pageurl
+                                if (pagesOBJ[url.page]) {
+                                    pagesOBJ[url.page].count++
+                                } else {
+                                    pagesOBJ[url.page] = {
+                                        url: view.pageurl,
+                                        count: 1
+                                    }
                                 }
-                            })
 
-                          
+                            })
+                            let pages = []
+                            Object.keys(pagesOBJ).forEach(key => { 
+                                pages.push({
+                                    path: key,
+                                    views: pagesOBJ[key].count
+                                })
+                            })
+                            return h.response({
+                                success: true,
+                                from: body.from || new Date(2021, 1, 1).toISOString(),
+                                to: body.to || new Date().toISOString(),
+                                    id: request.params.propertyID,
+                                    data: pages,
+                                    count: pages.length
+                                }).code(200);
+
                         } else {
                             return h.response({
                                 success: false,
@@ -333,7 +369,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
             }
-        }); // POST /api/v1/data/{property id}
+        }); // POST /api/v1/data/{property id}/pages
 
         await server.start();
         console.log('Server running on %s', server.info.uri);
