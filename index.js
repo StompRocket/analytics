@@ -34,9 +34,55 @@ MongoClient.connect(uri, function (err, client) {
 
         }
     }
-    const init = async () => {
 
-        async function logView(view) {
+    async function getDataForProperty(propertyID, from, to) {
+        const dataDB = client.db("analyticsDB").collection("views");
+        let data = [];
+        let start = from || new Date(2021, 1, 1).toISOString()
+        let end = to || new Date().toISOString()
+        // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
+        try {
+            data = await dataDB.find({
+                "propertyID": propertyID,
+                time: {
+                    $gte: start,
+                    $lt: end
+                }
+            }).toArray()
+        } catch {
+            data = []
+        }
+        return {
+            data: data,
+            from: start,
+            to: end
+        }
+    }
+    async function getProperty (propertyID) {
+        try {
+            let existing = await propertiesDB.find({
+                "_id": propertyID
+            }).toArray();
+            //console.log(existing)
+            if (existing.length > 0) {
+                let property = existing[0]
+                return property
+            } else {
+                return false
+            }
+        } catch {
+            return false
+        } 
+    }
+    function authorizedForProperty (property, uid, apiKey) {
+        if (property.access.indexOf(uid) > -1) {
+            return true
+        } else if (property.apiKey == apiKey) {
+            return true
+        }
+        return false
+    }
+     async function logView(view) {
 
             const DBviews = client.db("analyticsDB").collection("views");
             await DBviews.insertOne(view);
@@ -56,6 +102,9 @@ MongoClient.connect(uri, function (err, client) {
 
 
         }
+    const init = async () => {
+
+       
         const server = Hapi.server({
             port: 3056,
             host: 'localhost',
@@ -211,34 +260,17 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                    let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                          const result = await getDataForProperty(request.params.propertyID)
                             return h.response({
                                 success: true,
                                 id: request.params.propertyID,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
-                                data: data,
-                                count: data.length
+                                from: result.from,
+                                to: result.to,
+                                data: result.data,
+                                count: result.data.length
                             }).code(200);
                         } else {
                             return h.response({
@@ -246,20 +278,12 @@ MongoClient.connect(uri, function (err, client) {
                                 error: "not authorized"
                             }).code(401);
                         }
-
-
-
                     } else {
                         return h.response({
                             success: false,
                             error: "property doesn't exist"
                         }).code(401);
-
-
                     }
-
-
-
                 } else {
                     return h.response({
                         success: false,
@@ -282,33 +306,17 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                 let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data;
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
+                                    from: dataDB.from,
+                                    to: dataDB.to,
                                     data: [],
                                     count: 0,
                                     totalViews: 0
@@ -338,8 +346,8 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                  from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
                                 data: pages,
                                 count: pages.length,
@@ -388,33 +396,17 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                      let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
+                                      from: dataDB.from,
+                                    to: dataDB.to,
                                     data: [],
                                     count: 0,
                                     totalViews: 0
@@ -451,8 +443,8 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                 from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
                                 data: pages,
                                 count: pages.length,
@@ -501,33 +493,17 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                    let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
+                                     from: dataDB.from,
+                                    to: dataDB.to,
                                     data: [],
                                     count: 0,
                                     totalViews: 0
@@ -557,8 +533,8 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                  from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
                                 data: pages,
                                 count: pages.length,
@@ -607,33 +583,17 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                   let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
+                                      from: dataDB.from,
+                                    to: dataDB.to,
                                     data: [],
                                     count: 0,
                                     totalViews: 0
@@ -663,13 +623,13 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                  from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
                                 count: pages.length,
                                 totalViews: data.length,
                                 data: pages,
-                         
+
                             }).code(200);
 
                         } else {
@@ -714,33 +674,17 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                    let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
+                                      from: dataDB.from,
+                                    to: dataDB.to,
                                     data: [],
                                     count: 0,
                                     totalViews: 0
@@ -770,13 +714,13 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                  from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
                                 count: pages.length,
                                 totalViews: data.length,
                                 data: pages,
-                              
+
                             }).code(200);
 
                         } else {
@@ -807,7 +751,7 @@ MongoClient.connect(uri, function (err, client) {
                 }
             }
         }); // POST /api/v1/data/{property id}/platforms
-         server.route({
+        server.route({
             method: 'POST',
             path: '/api/v1/data/{propertyID}/screens',
             handler: async function (request, h) {
@@ -821,33 +765,17 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                  let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
+                                      from: dataDB.from,
+                                    to: dataDB.to,
                                     data: [],
                                     count: 0,
                                     totalViews: 0
@@ -879,13 +807,13 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                  from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
                                 count: pages.length,
                                 totalViews: data.length,
                                 data: pages,
-                               
+
                             }).code(200);
 
                         } else {
@@ -915,8 +843,8 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
             }
-         }); // POST /api/v1/data/{property id}/screens
-         server.route({
+        }); // POST /api/v1/data/{property id}/screens
+        server.route({
             method: 'POST',
             path: '/api/v1/data/{propertyID}/locations',
             handler: async function (request, h) {
@@ -930,36 +858,21 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                 let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
-                                    data: [],
-                                    count: 0,
-                                    totalViews: 0
+                                      from: dataDB.from,
+                                    to: dataDB.to,
+                                   totalViews: data.length,
+                                regions: [],
+                                cities: [],
+                                countries: [],
                                 }).code(200);
                             }
                             let citiesOBJ = {}
@@ -971,7 +884,7 @@ MongoClient.connect(uri, function (err, client) {
                                 let location = view.location
                                 let cityString = `${location.city},${location.region},${location.country}`
                                 let regionString = `${location.region},${location.country}`
-                                
+
                                 if (citiesOBJ[cityString]) {
                                     citiesOBJ[cityString].count++
                                 } else {
@@ -992,14 +905,14 @@ MongoClient.connect(uri, function (err, client) {
                                         count: 1
                                     }
                                 }
-                                 if (countriesOBJ[location.country]) {
+                                if (countriesOBJ[location.country]) {
                                     countriesOBJ[location.country].count++
                                 } else {
                                     countriesOBJ[location.country] = {
-                                          location: {
+                                        location: {
                                             country: location.country,
                                             flag: location.flag,
-                                            
+
                                         },
                                         count: 1
                                     }
@@ -1014,14 +927,14 @@ MongoClient.connect(uri, function (err, client) {
                                     views: citiesOBJ[key].count
                                 })
                             })
-                             let regions = []
+                            let regions = []
                             Object.keys(regionsOBJ).forEach(key => {
                                 regions.push({
                                     location: regionsOBJ[key].location,
                                     views: regionsOBJ[key].count
                                 })
                             })
-                              let countries = []
+                            let countries = []
                             Object.keys(countriesOBJ).forEach(key => {
                                 countries.push({
                                     location: countriesOBJ[key].location,
@@ -1030,15 +943,15 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                  from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
-                                 totalViews: data.length,
+                                totalViews: data.length,
                                 regions: regions,
                                 cities: cities,
                                 countries: countries,
-                                
-                               
+
+
                             }).code(200);
 
                         } else {
@@ -1069,7 +982,7 @@ MongoClient.connect(uri, function (err, client) {
                 }
             }
         }); // POST /api/v1/data/{property id}/locations
-       server.route({
+        server.route({
             method: 'POST',
             path: '/api/v1/data/{propertyID}/views',
             handler: async function (request, h) {
@@ -1083,51 +996,36 @@ MongoClient.connect(uri, function (err, client) {
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
                 if (uid) {
-                    let existing = await propertiesDB.find({
-                        "_id": request.params.propertyID
-                    }).toArray();
-                    console.log(existing)
-                    if (existing.length > 0) {
-                        let property = existing[0]
-                        if (property.access.indexOf(uid) > -1) {
-                            const dataDB = client.db("analyticsDB").collection("views");
-                            let data = [];
-                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
-                            try {
-                                data = await dataDB.find({
-                                    "propertyID": request.params.propertyID,
-                                    time: {
-                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
-                                        $lt: body.to || new Date().toISOString()
-                                    }
-                                }).toArray()
-                            } catch {
-                                data = []
-                            }
+                   let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID)   
+                            let data = dataDB.data
                             if (data.length == 0) {
                                 return h.response({
                                     success: true,
                                     id: request.params.propertyID,
-                                    from: body.from || new Date(2021, 1, 1).toISOString(),
-                                    to: body.to || new Date().toISOString(),
+                                      from: dataDB.from,
+                                    to: dataDB.to,
                                     data: [],
                                     count: 0,
-                                    totalViews: 0
+                                    totalViews: 0,
+                                    visitors: 0
                                 }).code(200);
                             }
-                           let views = []
+                            let views = []
                             let totalViews = 0
                             data.forEach(view => {
                                 let landing = true
-                                 if (view.refferer) {
-                                let refferer = getURLComponents(view.refferer)
-                               
-                               
-                                    if (refferer.hostname == property.domain){ 
-                                    landing = false
+                                if (view.refferer) {
+                                    let refferer = getURLComponents(view.refferer)
+
+
+                                    if (refferer.hostname == property.domain) {
+                                        landing = false
+                                    }
                                 }
-                                }
-                                
+
                                 views.push({
                                     time: view.time,
                                     page: getURLComponents(view.pageurl).page,
@@ -1139,13 +1037,15 @@ MongoClient.connect(uri, function (err, client) {
                             })
                             return h.response({
                                 success: true,
-                                from: body.from || new Date(2021, 1, 1).toISOString(),
-                                to: body.to || new Date().toISOString(),
+                                  from: dataDB.from,
+                                    to: dataDB.to,
                                 id: request.params.propertyID,
-                                 visitors: views.filter(a => { return a.landing}).length,
+                                visitors: views.filter(a => {
+                                    return a.landing
+                                }).length,
                                 totalViews: data.length,
                                 data: views,
-                               
+
                             }).code(200);
 
                         } else {
@@ -1175,8 +1075,8 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
             }
-       }); // POST /api/v1/data/{property id}/views
-     
+        }); // POST /api/v1/data/{property id}/views
+
         await server.start();
         console.log('Server running on %s', server.info.uri);
 
