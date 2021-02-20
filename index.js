@@ -666,9 +666,10 @@ MongoClient.connect(uri, function (err, client) {
                                 from: body.from || new Date(2021, 1, 1).toISOString(),
                                 to: body.to || new Date().toISOString(),
                                 id: request.params.propertyID,
-                                data: pages,
                                 count: pages.length,
-                                totalViews: data.length
+                                totalViews: data.length,
+                                data: pages,
+                         
                             }).code(200);
 
                         } else {
@@ -772,9 +773,10 @@ MongoClient.connect(uri, function (err, client) {
                                 from: body.from || new Date(2021, 1, 1).toISOString(),
                                 to: body.to || new Date().toISOString(),
                                 id: request.params.propertyID,
-                                data: pages,
                                 count: pages.length,
-                                totalViews: data.length
+                                totalViews: data.length,
+                                data: pages,
+                              
                             }).code(200);
 
                         } else {
@@ -880,9 +882,10 @@ MongoClient.connect(uri, function (err, client) {
                                 from: body.from || new Date(2021, 1, 1).toISOString(),
                                 to: body.to || new Date().toISOString(),
                                 id: request.params.propertyID,
-                                data: pages,
                                 count: pages.length,
-                                totalViews: data.length
+                                totalViews: data.length,
+                                data: pages,
+                               
                             }).code(200);
 
                         } else {
@@ -1030,11 +1033,12 @@ MongoClient.connect(uri, function (err, client) {
                                 from: body.from || new Date(2021, 1, 1).toISOString(),
                                 to: body.to || new Date().toISOString(),
                                 id: request.params.propertyID,
+                                 totalViews: data.length,
                                 regions: regions,
                                 cities: cities,
                                 countries: countries,
                                 
-                                totalViews: data.length
+                               
                             }).code(200);
 
                         } else {
@@ -1065,7 +1069,114 @@ MongoClient.connect(uri, function (err, client) {
                 }
             }
         }); // POST /api/v1/data/{property id}/locations
+       server.route({
+            method: 'POST',
+            path: '/api/v1/data/{propertyID}/views',
+            handler: async function (request, h) {
+                let body = request.payload;
+                if (!body || !body.auth) {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+                let uid = await verifyToken(body.auth);
+                console.log(request.params.propertyID, uid);
+                if (uid) {
+                    let existing = await propertiesDB.find({
+                        "_id": request.params.propertyID
+                    }).toArray();
+                    console.log(existing)
+                    if (existing.length > 0) {
+                        let property = existing[0]
+                        if (property.access.indexOf(uid) > -1) {
+                            const dataDB = client.db("analyticsDB").collection("views");
+                            let data = [];
+                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
+                            try {
+                                data = await dataDB.find({
+                                    "propertyID": request.params.propertyID,
+                                    time: {
+                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
+                                        $lt: body.to || new Date().toISOString()
+                                    }
+                                }).toArray()
+                            } catch {
+                                data = []
+                            }
+                            if (data.length == 0) {
+                                return h.response({
+                                    success: true,
+                                    id: request.params.propertyID,
+                                    from: body.from || new Date(2021, 1, 1).toISOString(),
+                                    to: body.to || new Date().toISOString(),
+                                    data: [],
+                                    count: 0,
+                                    totalViews: 0
+                                }).code(200);
+                            }
+                           let views = []
+                            let totalViews = 0
+                            data.forEach(view => {
+                                let landing = true
+                                 if (view.refferer) {
+                                let refferer = getURLComponents(view.refferer)
+                               
+                               
+                                    if (refferer.hostname == property.domain){ 
+                                    landing = false
+                                }
+                                }
+                                
+                                views.push({
+                                    time: view.time,
+                                    page: getURLComponents(view.pageurl).page,
+                                    landing: landing,
+                                    refferer: view.refferer
+                                })
+                                totalViews++
 
+                            })
+                            return h.response({
+                                success: true,
+                                from: body.from || new Date(2021, 1, 1).toISOString(),
+                                to: body.to || new Date().toISOString(),
+                                id: request.params.propertyID,
+                                 visitors: views.filter(a => { return a.landing}).length,
+                                totalViews: data.length,
+                                data: views,
+                               
+                            }).code(200);
+
+                        } else {
+                            return h.response({
+                                success: false,
+                                error: "not authorized"
+                            }).code(401);
+                        }
+
+
+
+                    } else {
+                        return h.response({
+                            success: false,
+                            error: "property doesn't exist"
+                        }).code(401);
+
+
+                    }
+
+
+
+                } else {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+            }
+       }); // POST /api/v1/data/{property id}/views
+     
         await server.start();
         console.log('Server running on %s', server.info.uri);
 
