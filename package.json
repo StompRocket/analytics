@@ -22,6 +22,7 @@
     "@hapi/inert": "^6.0.3",
     "esbuild": "^0.8.45",
     "firebase-admin": "^9.5.0",
+    "moment": "^2.29.1",
     "mongodb": "^3.6.4",
     "node-fetch": "^2.6.1",
     "ua-parser-js": "^0.7.24",
