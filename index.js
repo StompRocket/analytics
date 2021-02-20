@@ -805,6 +805,267 @@ MongoClient.connect(uri, function (err, client) {
                 }
             }
         }); // POST /api/v1/data/{property id}/platforms
+         server.route({
+            method: 'POST',
+            path: '/api/v1/data/{propertyID}/screens',
+            handler: async function (request, h) {
+                let body = request.payload;
+                if (!body || !body.auth) {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+                let uid = await verifyToken(body.auth);
+                console.log(request.params.propertyID, uid);
+                if (uid) {
+                    let existing = await propertiesDB.find({
+                        "_id": request.params.propertyID
+                    }).toArray();
+                    console.log(existing)
+                    if (existing.length > 0) {
+                        let property = existing[0]
+                        if (property.access.indexOf(uid) > -1) {
+                            const dataDB = client.db("analyticsDB").collection("views");
+                            let data = [];
+                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
+                            try {
+                                data = await dataDB.find({
+                                    "propertyID": request.params.propertyID,
+                                    time: {
+                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
+                                        $lt: body.to || new Date().toISOString()
+                                    }
+                                }).toArray()
+                            } catch {
+                                data = []
+                            }
+                            if (data.length == 0) {
+                                return h.response({
+                                    success: true,
+                                    id: request.params.propertyID,
+                                    from: body.from || new Date(2021, 1, 1).toISOString(),
+                                    to: body.to || new Date().toISOString(),
+                                    data: [],
+                                    count: 0,
+                                    totalViews: 0
+                                }).code(200);
+                            }
+                            let screensOBJ = {}
+                            let totalViews = 0
+                            data.forEach(view => {
+                                let browser = `${view.screen.width},${view.screen.height}`
+                                if (screensOBJ[browser]) {
+                                    screensOBJ[browser].count++
+                                } else {
+                                    screensOBJ[browser] = {
+
+                                        count: 1
+                                    }
+                                }
+                                totalViews++
+
+                            })
+                            let pages = []
+                            Object.keys(screensOBJ).forEach(key => {
+                                let screen = key.split(",")
+                                pages.push({
+                                    width: screen[0],
+                                    height: screen[1],
+                                    views: screensOBJ[key].count
+                                })
+                            })
+                            return h.response({
+                                success: true,
+                                from: body.from || new Date(2021, 1, 1).toISOString(),
+                                to: body.to || new Date().toISOString(),
+                                id: request.params.propertyID,
+                                data: pages,
+                                count: pages.length,
+                                totalViews: data.length
+                            }).code(200);
+
+                        } else {
+                            return h.response({
+                                success: false,
+                                error: "not authorized"
+                            }).code(401);
+                        }
+
+
+
+                    } else {
+                        return h.response({
+                            success: false,
+                            error: "property doesn't exist"
+                        }).code(401);
+
+
+                    }
+
+
+
+                } else {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+            }
+         }); // POST /api/v1/data/{property id}/screens
+         server.route({
+            method: 'POST',
+            path: '/api/v1/data/{propertyID}/locations',
+            handler: async function (request, h) {
+                let body = request.payload;
+                if (!body || !body.auth) {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+                let uid = await verifyToken(body.auth);
+                console.log(request.params.propertyID, uid);
+                if (uid) {
+                    let existing = await propertiesDB.find({
+                        "_id": request.params.propertyID
+                    }).toArray();
+                    console.log(existing)
+                    if (existing.length > 0) {
+                        let property = existing[0]
+                        if (property.access.indexOf(uid) > -1) {
+                            const dataDB = client.db("analyticsDB").collection("views");
+                            let data = [];
+                            // console.log(new Date(2021, 1, 1).toISOString(), new Date().toISOString())
+                            try {
+                                data = await dataDB.find({
+                                    "propertyID": request.params.propertyID,
+                                    time: {
+                                        $gte: body.from || new Date(2021, 1, 1).toISOString(),
+                                        $lt: body.to || new Date().toISOString()
+                                    }
+                                }).toArray()
+                            } catch {
+                                data = []
+                            }
+                            if (data.length == 0) {
+                                return h.response({
+                                    success: true,
+                                    id: request.params.propertyID,
+                                    from: body.from || new Date(2021, 1, 1).toISOString(),
+                                    to: body.to || new Date().toISOString(),
+                                    data: [],
+                                    count: 0,
+                                    totalViews: 0
+                                }).code(200);
+                            }
+                            let citiesOBJ = {}
+                            let regionsOBJ = {}
+                            let countriesOBJ = {}
+                            let pagesOBJ = {}
+                            let totalViews = 0
+                            data.forEach(view => {
+                                let location = view.location
+                                let cityString = `${location.city},${location.region},${location.country}`
+                                let regionString = `${location.region},${location.country}`
+                                
+                                if (citiesOBJ[cityString]) {
+                                    citiesOBJ[cityString].count++
+                                } else {
+                                    citiesOBJ[cityString] = {
+                                        location: location,
+                                        count: 1
+                                    }
+                                }
+                                if (regionsOBJ[regionString]) {
+                                    regionsOBJ[regionString].count++
+                                } else {
+                                    regionsOBJ[regionString] = {
+                                        location: {
+                                            country: location.country,
+                                            flag: location.flag,
+                                            region: location.region
+                                        },
+                                        count: 1
+                                    }
+                                }
+                                 if (countriesOBJ[location.country]) {
+                                    countriesOBJ[location.country].count++
+                                } else {
+                                    countriesOBJ[location.country] = {
+                                          location: {
+                                            country: location.country,
+                                            flag: location.flag,
+                                            
+                                        },
+                                        count: 1
+                                    }
+                                }
+                                totalViews++
+
+                            })
+                            let cities = []
+                            Object.keys(citiesOBJ).forEach(key => {
+                                cities.push({
+                                    location: citiesOBJ[key].location,
+                                    views: citiesOBJ[key].count
+                                })
+                            })
+                             let regions = []
+                            Object.keys(regionsOBJ).forEach(key => {
+                                regions.push({
+                                    location: regionsOBJ[key].location,
+                                    views: regionsOBJ[key].count
+                                })
+                            })
+                              let countries = []
+                            Object.keys(countriesOBJ).forEach(key => {
+                                countries.push({
+                                    location: countriesOBJ[key].location,
+                                    views: countriesOBJ[key].count
+                                })
+                            })
+                            return h.response({
+                                success: true,
+                                from: body.from || new Date(2021, 1, 1).toISOString(),
+                                to: body.to || new Date().toISOString(),
+                                id: request.params.propertyID,
+                                regions: regions,
+                                cities: cities,
+                                countries: countries,
+                                
+                                totalViews: data.length
+                            }).code(200);
+
+                        } else {
+                            return h.response({
+                                success: false,
+                                error: "not authorized"
+                            }).code(401);
+                        }
+
+
+
+                    } else {
+                        return h.response({
+                            success: false,
+                            error: "property doesn't exist"
+                        }).code(401);
+
+
+                    }
+
+
+
+                } else {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+            }
+        }); // POST /api/v1/data/{property id}/locations
+
         await server.start();
         console.log('Server running on %s', server.info.uri);
 
