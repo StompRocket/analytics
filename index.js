@@ -378,10 +378,10 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data
                             
-                            let result = dataProcessors.getRefferersFromData(data, property.domain, body.from || null, body.to || null)
+                            let result = dataProcessors.getRefferersFromData(data, property.domain)
                             return h.response({
                                 success: true,
                                 from: dataDB.from,
