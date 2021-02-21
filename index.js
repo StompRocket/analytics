@@ -75,6 +75,7 @@ MongoClient.connect(uri, function (err, client) {
         } else if (property.apiKey == apiKey) {
             return true
         }
+        console.log("not authorized", property["_id"], uid, apiKey)
         return false
     }
     async function logView(view) {
@@ -380,7 +381,7 @@ MongoClient.connect(uri, function (err, client) {
                             const dataDB = await getDataForProperty(request.params.propertyID)
                             let data = dataDB.data
                             
-                            let result = dataProcessors.getRefferersFromData(data)
+                            let result = dataProcessors.getRefferersFromData(data, property.domain)
                             return h.response({
                                 success: true,
                                 from: dataDB.from,
@@ -723,16 +724,17 @@ MongoClient.connect(uri, function (err, client) {
                 if (!body || !body.auth && !body.key) {
                     return h.response({
                         success: false,
-                        error: "not authorized"
+                        error: "not authorized",
+                        description: "not enough data"
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
                 console.log(request.params.propertyID, uid);
-                if (uid, body.key) {
+                if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data
                             let result = dataProcessors.getViewsFromData(data, property.domain)
                             return h.response({
@@ -769,7 +771,8 @@ MongoClient.connect(uri, function (err, client) {
                 } else {
                     return h.response({
                         success: false,
-                        error: "not authorized"
+                        error: "not authorized",
+                        description: "not enough data"
                     }).code(401);
                 }
             }

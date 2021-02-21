@@ -28,7 +28,7 @@ function getPagesFromData (data) {
     return pages
 }
 
-function getRefferersFromData(data) {
+function getRefferersFromData(data, domain) {
     if (data.length == 0) {
         return []
     }
@@ -38,7 +38,7 @@ function getRefferersFromData(data) {
         if (view.refferer && view.refferer.length > 1) {
             let url = helpers.getURLComponents(view.refferer)
             //console.log(url.hostname, property.domain)
-            if (url.hostname != property.domain && url.url.length > 1) {
+            if (url.hostname != domain && url.url.length > 1) {
                 if (pagesOBJ[view.refferer]) {
                     pagesOBJ[view.refferer].count++
                 } else {
