@@ -272,7 +272,7 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const result = await getDataForProperty(request.params.propertyID)
+                            const result = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             return h.response({
                                 success: true,
                                 id: request.params.propertyID,
@@ -318,7 +318,7 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data;
                             
                             
@@ -381,7 +381,7 @@ MongoClient.connect(uri, function (err, client) {
                             const dataDB = await getDataForProperty(request.params.propertyID)
                             let data = dataDB.data
                             
-                            let result = dataProcessors.getRefferersFromData(data, property.domain)
+                            let result = dataProcessors.getRefferersFromData(data, property.domain, body.from || null, body.to || null)
                             return h.response({
                                 success: true,
                                 from: dataDB.from,
@@ -437,7 +437,7 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data
                             let pages = dataProcessors.getBrowsersFromData(data)
                             return h.response({
@@ -495,7 +495,7 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data
                             let pages = dataProcessors.getOSFromData(data)
                             return h.response({
@@ -554,7 +554,7 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data
                             let pages = dataProcessors.getPlatformsFromData(data)
                             return h.response({
@@ -613,7 +613,7 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data
                             let pages = dataProcessors.getScreensFromData(data)
                             return h.response({
@@ -672,7 +672,7 @@ MongoClient.connect(uri, function (err, client) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
                         if (authorizedForProperty(property, uid, body.key)) {
-                            const dataDB = await getDataForProperty(request.params.propertyID)
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
                             let data = dataDB.data
                             let result = dataProcessors.getLocationsFromData(data)
                             return h.response({

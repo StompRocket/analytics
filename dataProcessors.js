@@ -277,7 +277,7 @@ function getViewsFromData(data, domain) {
     let totalViews = 0
     data.forEach(view => {
         let landing = true
-        if (view.refferer) {
+        if (view.refferer && view.refferer.length > 1) {
             let refferer = helpers.getURLComponents(view.refferer)
             
             
