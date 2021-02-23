@@ -1,4 +1,5 @@
-const helpers = require("./helpers")   
+const helpers = require("./helpers") 
+const langs = require("./langaugeCodes.json")  
 function getPagesFromData (data) {
     if (data.length == 0) {
         return []
@@ -143,8 +144,22 @@ function getLanguagesFrom(data) {
     })
     let pages = []
     Object.keys(pagesOBJ).forEach(key => {
+        
+        let langCode = key.split("-")
+        let name;
+        if (langs[langCode[0]]) {
+            name = langs[langCode[0]].name
+            if (langCode.length > 1) {
+                name = name + "-" + langCode[1]
+            }
+        } else { 
+            name = key
+        }
+     
+        
         pages.push({
             name: key,
+            formattedName: name,
             views: pagesOBJ[key].count
         })
     })
