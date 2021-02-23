@@ -151,11 +151,41 @@ MongoClient.connect(uri, function (err, client) {
          server.route({
             method: 'GET',
             path: '/ip',
-            handler: function (request, h) {
-                  const xFF = request.headers['x-forwarded-for'];
-                const ip = xFF ? xFF.split(',')[0] : request.info.remoteAddress;
-                return `${ip}`;
-            }
+             handler: async function (request, h) {
+                 
+                 const xFF = request.headers['x-forwarded-for'];
+                 const ip = xFF ? xFF.split(',')[0] : request.info.remoteAddress;
+   //              const clientData = request.payload.split(',');
+                 let uaData = uaParser(request.headers["user-agent"]);
+               //  let urlComponents = helpers.getURLComponents(clientData[0])
+                // console.log(urlComponents)
+               
+                    
+                    
+            
+                
+                         console.log();
+                         const data = {
+                             propertyID: "NONE",
+                            
+                             userAgent: request.headers["user-agent"],
+                            
+                            host: request.info.host,
+                            
+                             browser: {
+                                 name: uaData.browser.name,
+                                 version: uaData.browser.version,
+                                 os: uaData.os.name,
+                             }
+                         };
+                         //console.log(data);
+                        
+                        
+                 return ip + JSON.stringify(data);
+                    
+              
+              
+             }
         }); // /ip
         server.route({
             method: 'POST',
