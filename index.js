@@ -148,6 +148,15 @@ MongoClient.connect(uri, function (err, client) {
                 return h.file('src/code.js');
             }
         }); // /script
+         server.route({
+            method: 'GET',
+            path: '/ip',
+            handler: function (request, h) {
+                  const xFF = request.headers['x-forwarded-for'];
+                const ip = xFF ? xFF.split(',')[0] : request.info.remoteAddress;
+                return `${ip}`;
+            }
+        }); // /ip
         server.route({
             method: 'POST',
             path: '/api/v1/view',
