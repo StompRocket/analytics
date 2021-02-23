@@ -166,9 +166,9 @@ MongoClient.connect(uri, function (err, client) {
                 
                          console.log();
                          const data = {
-                             propertyID: "NONE",
+                             ip: ip,
                             
-                             userAgent: request.headers["user-agent"],
+                             
                             
                             host: request.info.host,
                             
@@ -176,12 +176,13 @@ MongoClient.connect(uri, function (err, client) {
                                  name: uaData.browser.name,
                                  version: uaData.browser.version,
                                  os: uaData.os.name,
-                             }
+                             },
+                             userAgent: request.headers["user-agent"],
                          };
                          //console.log(data);
                         
                         
-                 return ip + JSON.stringify(data);
+                 return data;
                     
               
               
