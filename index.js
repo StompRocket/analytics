@@ -276,6 +276,7 @@ MongoClient.connect(uri, function (err, client) {
                             return h.response({
                                 success: true,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 from: result.from,
                                 to: result.to,
                                 data: result.data,
@@ -328,6 +329,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 data: pages,
                                 count: pages.length,
                                 totalViews: data.length
@@ -387,6 +389,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 data: result,
                                 count: result.length,
                                 totalViews: data.length
@@ -445,6 +448,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 data: pages,
                                 count: pages.length,
                                 totalViews: data.length
@@ -478,6 +482,65 @@ MongoClient.connect(uri, function (err, client) {
                 }
             }
         }); // POST /api/v1/data/{property id}/browsers
+         server.route({
+            method: 'POST',
+            path: '/api/v1/data/{propertyID}/languages',
+            handler: async function (request, h) {
+                let body = request.payload;
+                if (!body || !body.auth && !body.key) {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+                let uid = await verifyToken(body.auth);
+                console.log(request.params.propertyID, uid);
+                if (uid || body.key) {
+                    let property = await getProperty(request.params.propertyID)
+                    if (property) {
+                        if (authorizedForProperty(property, uid, body.key)) {
+                            const dataDB = await getDataForProperty(request.params.propertyID, body.from || null, body.to || null)
+                            let data = dataDB.data
+                            let pages = dataProcessors.getLanguagesFrom(data)
+                            return h.response({
+                                success: true,
+                                from: dataDB.from,
+                                to: dataDB.to,
+                                id: request.params.propertyID,
+                                domain: property.domain,
+                                data: pages,
+                                count: pages.length,
+                                totalViews: data.length
+                            }).code(200);
+                            
+                        } else {
+                            return h.response({
+                                success: false,
+                                error: "not authorized"
+                            }).code(401);
+                        }
+                        
+                        
+                        
+                    } else {
+                        return h.response({
+                            success: false,
+                            error: "property doesn't exist"
+                        }).code(401);
+                        
+                        
+                    }
+                    
+                    
+                    
+                } else {
+                    return h.response({
+                        success: false,
+                        error: "not authorized"
+                    }).code(401);
+                }
+            }
+        }); // POST /api/v1/data/{property id}/languages
         server.route({
             method: 'POST',
             path: '/api/v1/data/{propertyID}/os',
@@ -503,6 +566,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 count: pages.length,
                                 totalViews: data.length,
                                 data: pages,
@@ -562,6 +626,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 count: pages.length,
                                 totalViews: data.length,
                                 data: pages,
@@ -621,6 +686,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 count: pages.length,
                                 totalViews: data.length,
                                 data: pages,
@@ -680,6 +746,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 totalViews: data.length,
                                 regions: result.regions,
                                 cities: result.cities,
@@ -742,6 +809,7 @@ MongoClient.connect(uri, function (err, client) {
                                 from: dataDB.from,
                                 to: dataDB.to,
                                 id: request.params.propertyID,
+                                domain: property.domain,
                                 visitors: result.visitors,
                                 totalViews: data.length,
                                 data: result.views,

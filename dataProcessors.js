@@ -121,6 +121,35 @@ function getOSFromData(data) {
     })
     return pages
 }
+function getLanguagesFrom(data) {
+    if (data.length == 0) {
+        return []
+    }
+    let pagesOBJ = {}
+    let totalViews = 0
+    data.forEach(view => {
+    
+        let browser = view.language.toLowerCase()
+        if (pagesOBJ[browser]) {
+            pagesOBJ[browser].count++
+        } else {
+            pagesOBJ[browser] = {
+                
+                count: 1
+            }
+        }
+        totalViews++
+        
+    })
+    let pages = []
+    Object.keys(pagesOBJ).forEach(key => {
+        pages.push({
+            name: key,
+            views: pagesOBJ[key].count
+        })
+    })
+    return pages
+}
 
 function getPlatformsFromData(data) {
     if (data.length == 0) {
@@ -311,5 +340,6 @@ module.exports = {
     getRefferersFromData,
     getBrowsersFromData,
     getScreensFromData,
-    getViewsFromData
+    getViewsFromData,
+    getLanguagesFrom
 }
