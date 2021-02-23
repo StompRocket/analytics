@@ -150,7 +150,7 @@ MongoClient.connect(uri, function (err, client) {
         }); // /script
          server.route({
             method: 'GET',
-            path: '/ip',
+            path: '/api/v1/ip',
              handler: async function (request, h) {
                  
                  const xFF = request.headers['x-forwarded-for'];
