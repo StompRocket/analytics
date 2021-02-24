@@ -265,6 +265,10 @@ MongoClient.connect(uri, function (err, client) {
                         }).code(401);
                         
                     } else {
+                        let exclude = []
+                        if (body.exlude && body.exclude.length > 0) {
+                            exclude = body.exclude
+                        }
                         
                         const propertiesDB = client.db("analyticsDB").collection("properties");
                         let id = uuid.v4();
@@ -274,6 +278,7 @@ MongoClient.connect(uri, function (err, client) {
                             domain: body.domain,
                             owner: uid,
                             access: [uid],
+                            exlude: exclude,
                             created: new Date().toISOString()
                         });
                         return h.response({
