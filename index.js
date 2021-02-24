@@ -271,7 +271,9 @@ MongoClient.connect(uri, function (err, client) {
                         
                     } else {
                         let exclude = []
-                        if (body.exlude && body.exclude.length > 0) {
+                        console.log(body.exclude, "exlcude info")
+                        if (body.exclude && body.exclude.length > 0) {
+                            
                             exclude = body.exclude
                         }
                         
