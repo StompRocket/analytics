@@ -203,7 +203,10 @@ MongoClient.connect(uri, function (err, client) {
                 }).toArray();
                 if (existing.length > 0) {
                     
-                    
+                    if (existing[0].exclude && existing[0].exclude.indexOf(ip) > -1) { 
+                        console.log("excluded ip")
+                       
+                    } else {
                     console.log(existing)
                     fetch('http://ipwhois.app/json/' + ip)
                     .then(res => res.json())
@@ -236,6 +239,8 @@ MongoClient.connect(uri, function (err, client) {
                         console.log(data);
                         logView(data);
                     });
+                    }
+                  
                     
                 } else {
                     console.log("not registered domain")
