@@ -202,7 +202,7 @@ MongoClient.connect(uri, function (err, client) {
                     domain: urlComponents.hostname
                 }).toArray();
                 if (existing.length > 0) {
-                    
+                    console.log(existing[0].exclude, ip, existing[0].exclude.indexOf(ip))
                     if (existing[0].exclude && existing[0].exclude.indexOf(ip) > -1) { 
                         console.log("excluded ip")
                        
