@@ -9,7 +9,7 @@ async function getLocationFromIP (ip) {
             return {
                 country: data["country_name"],
                 region: data["region_name"],
-                city: data["city_name"]
+                city: data["city"]
             }
         } else { 
             return {
