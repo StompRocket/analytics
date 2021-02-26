@@ -10,7 +10,8 @@ async function getLocationFromIP (ip) {
                 country: data["country_name"],
                 region: data["region_name"],
                 city: data["city"],
-                tz: data["time_zone"]
+                tz: data["time_zone"],
+                source: "freegeoip.app"
             }
         } else { 
             return {
