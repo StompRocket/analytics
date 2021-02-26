@@ -162,7 +162,7 @@ MongoClient.connect(uri, function (err, client) {
                 // console.log(urlComponents)
                
                     
-                    let location = await apis.getLocationFromIP(ip)
+                    let location = await apis.getLocationFromIPCache(ip)
             
                 
                          console.log();
@@ -209,7 +209,7 @@ MongoClient.connect(uri, function (err, client) {
                        
                     } else {
                     console.log(existing)
-                   let location = await apis.getLocationFromIP(ip)
+                   let location = await apis.getLocationFromIPCache(ip)
                         const data = {
                             propertyID: existing[0]["_id"],
                             pageurl: clientData[0],

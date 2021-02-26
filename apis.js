@@ -8,14 +8,14 @@ let mongoDB = new MongoClient({
 })
 const fetch = require("node-fetch")
 
-async function getLocationFromIP (ip) { 
+async function getLocationFromIP(ip) {
     let url = `https://freegeoip.app/json/${ip}`
     try {
         let res = await fetch(url)
         let data = await res.json()
         //console.log(data)
         if (data["country_name"]) {
-         
+
             return {
                 country: data["country_name"],
                 region: data["region_name"],
@@ -23,33 +23,61 @@ async function getLocationFromIP (ip) {
                 tz: data["time_zone"],
                 source: "freegeoip.app"
             }
-        } else { 
+        } else {
             return {
-                 country: "",
+                country: "",
                 region: "",
-              city: "",
+                city: "",
                 tz: ""
             }
         }
-    } catch (err) { 
+    } catch (err) {
         console.log('error', err)
-          return {
-                country: "",
-                region: "",
-              city: "",
-                tz: ""
-            }
+        return {
+            country: "",
+            region: "",
+            city: "",
+            tz: ""
+        }
     }
-    
+
 
 }
 async function getLocationFromIPCache(ip) {
-  MongoClient.connect(uri, function (err, client) {
-    let hash = sha512(ip).toString()
-    console.log(err)
-    const ipCahce = client.db("analyticsDB").collection("ipCahce");
-    ipCahce.find({"_id": hash}).toArray()
-  })
+    let result = {
+        country: "",
+        region: "",
+        city: "",
+        tz: ""
+    }
+    try {
+        let client = await MongoClient.connect(uri)
+        let hash = sha512(ip).toString()
+
+        const ipCahce = client.db("analyticsDB").collection("ipCahce");
+        let error, res = await ipCahce.findOne({
+            "_id": hash
+        })
+
+        if (res) {
+           // console.log(res.location)
+            res.location.cached = res.timestamp
+            result = res.location
+
+        } else {
+            result = await getLocationFromIP(ip)
+            ipCahce.insertOne({"_id": hash, location: result, timestamp: new Date().toISOString()})
+
+        }
+        client.close()
+
+    } catch (err) {
+        console.log(err)
+        result = await getLocationFromIP(ip)
+
+    }
+    return result
+
 }
 
 /* 
@@ -58,8 +86,15 @@ fetch('http://ipwhois.app/json/' + ip)
                     .then(async json => {
                         console.log(json["completed_requests"], request.info.host);
                         */
-getLocationFromIPCache("2600:1700:9580:b410:bcb9:e9ac:9e4d:c902")
+ let test = async () => {
+    let test = await getLocationFromIPCache("2600:1700:9580:b410:bcb9:e9ac:9e4d:c902")
+    console.log(test, "final")
+}
+//test()
 
 //https://nominatim.org/release-docs/develop/api/Reverse/
 
-module.exports = {getLocationFromIP}
+module.exports = {
+    getLocationFromIP,
+    getLocationFromIPCache
+}
