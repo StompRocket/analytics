@@ -3,6 +3,7 @@ const keys = require('./private/keys.json')
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/analyticsDB?retryWrites=true&w=majority`;
 const Agenda = require("agenda")
+const moment = require("moment")
 var uuid = require('uuid');
 
 const agenda = new Agenda({ db: { address: uri, collection: 'sys-tasks' } });
@@ -13,7 +14,7 @@ agenda.define("clean ip cache", async (job) => {
     const ipCahce = client.db("analyticsDB").collection("ipCahce");
    let res = await ipCahce.deleteMany({
         timestamp: {
-        $gt: new Date().toISOString()
+        $lt: moment().subtract(1, 'hours').toISOString()
         }
    })
     console.log(res.deletedCount, "deleted")
