@@ -9,13 +9,15 @@ async function getLocationFromIP (ip) {
             return {
                 country: data["country_name"],
                 region: data["region_name"],
-                city: data["city"]
+                city: data["city"],
+                tz: data["time_zone"]
             }
         } else { 
             return {
-                country: data["country_name"],
-                region: data["region_name"],
-                city: data["city"]
+                 country: "",
+                region: "",
+              city: "",
+                tz: ""
             }
         }
     } catch (err) { 
@@ -23,7 +25,8 @@ async function getLocationFromIP (ip) {
           return {
                 country: "",
                 region: "",
-                city: ""
+              city: "",
+                tz: ""
             }
     }
     
