@@ -6,6 +6,7 @@ const fetch = require('node-fetch');
 const keys = require('./private/keys.json')
 const uaParser = require('ua-parser-js');
 const dataProcessors = require("./dataProcessors.js")
+const apis = require("./apis.js")
 const helpers = require("./helpers.js")
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/analyticsDB?retryWrites=true&w=majority`;
@@ -161,7 +162,7 @@ MongoClient.connect(uri, function (err, client) {
                 // console.log(urlComponents)
                
                     
-                    
+                    let location = await apis.getLocationFromIP(ip)
             
                 
                          console.log();
@@ -169,7 +170,7 @@ MongoClient.connect(uri, function (err, client) {
                              ip: ip,
                             
                              
-                            
+                            location,
                             host: request.info.host,
                             
                              browser: {
