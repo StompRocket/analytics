@@ -209,10 +209,7 @@ MongoClient.connect(uri, function (err, client) {
                        
                     } else {
                     console.log(existing)
-                    fetch('http://ipwhois.app/json/' + ip)
-                    .then(res => res.json())
-                    .then(async json => {
-                        console.log(json["completed_requests"], request.info.host);
+                   let location = await apis.getLocationFromIP(ip)
                         const data = {
                             propertyID: existing[0]["_id"],
                             pageurl: clientData[0],
@@ -225,12 +222,7 @@ MongoClient.connect(uri, function (err, client) {
                                 width: clientData[5],
                                 height: clientData[6],
                             },
-                            location: {
-                                country: json.country,
-                                flag: json["country_flag"],
-                                region: json.region,
-                                city: json.city
-                            },
+                            location,
                             browser: {
                                 name: uaData.browser.name,
                                 version: uaData.browser.version,
@@ -239,7 +231,7 @@ MongoClient.connect(uri, function (err, client) {
                         };
                         console.log(data);
                         logView(data);
-                    });
+                   
                     }
                   
                     

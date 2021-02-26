@@ -32,6 +32,13 @@ async function getLocationFromIP (ip) {
     
 
 }
+
+/* 
+fetch('http://ipwhois.app/json/' + ip)
+                    .then(res => res.json())
+                    .then(async json => {
+                        console.log(json["completed_requests"], request.info.host);
+                        */
 //getLocationFromIP("2600:1700:9580:b410:bcb9:e9ac:9e4d:c902")
 
 //https://nominatim.org/release-docs/develop/api/Reverse/
