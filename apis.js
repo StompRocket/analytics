@@ -58,14 +58,44 @@ async function getLocationFromIP(ip) {
 
 }
 async function getLocationFromIPCache(ip) {
-  MongoClient.connect(uri, function (err, client) {
+  let result = {
+    country: "",
+    region: "",
+    city: "",
+    tz: ""
+  }
+  try {
+    let client = await MongoClient.connect(uri)
     let hash = sha512(ip).toString()
-    console.log(err)
+
     const ipCahce = client.db("analyticsDB").collection("ipCahce");
-    ipCahce.find({
+    let error, res = await ipCahce.findOne({
       "_id": hash
-    }).toArray()
-  })
+    })
+
+    if (res) {
+      // console.log(res.location)
+      res.location.cached = res.timestamp
+      result = res.location
+
+    } else {
+      result = await getLocationFromIP(ip)
+      ipCahce.insertOne({
+        "_id": hash,
+        location: result,
+        timestamp: new Date().toISOString()
+      })
+
+    }
+    client.close()
+
+  } catch (err) {
+    console.log(err)
+    result = await getLocationFromIP(ip)
+
+  }
+  return result
+
 }
 
 /* 
@@ -74,13 +104,15 @@ fetch('http://ipwhois.app/json/' + ip)
                     .then(async json => {
                         console.log(json["completed_requests"], request.info.host);
                         */
-let test = (async () => {
-  console.log(await getLocationFromIP("2600:1700:9580:b410:bcb9:e9ac:9e4d:c902"))
-})
-
+let test = async () => {
+  let test = await getLocationFromIPCache("2600:1700:9580:b410:bcb9:e9ac:9e4d:c902")
+  console.log(test, "final")
+}
+//test()
 
 //https://nominatim.org/release-docs/develop/api/Reverse/
-//test()
+
 module.exports = {
-  getLocationFromIP
+  getLocationFromIP,
+  getLocationFromIPCache
 }

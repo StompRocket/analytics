@@ -162,10 +162,10 @@ MongoClient.connect(uri, function (err, client) {
                 // console.log(urlComponents)
                
                     
-                    let location = await apis.getLocationFromIP(ip)
+                    let location = await apis.getLocationFromIPCache(ip)
             
                 
-                         console.log();
+                      //   console.log();
                          const data = {
                              ip: ip,
                             
@@ -208,8 +208,8 @@ MongoClient.connect(uri, function (err, client) {
                         console.log("excluded ip")
                        
                     } else {
-                    console.log(existing)
-                   let location = await apis.getLocationFromIP(ip)
+                    //console.log(existing)
+                   let location = await apis.getLocationFromIPCache(ip)
                         const data = {
                             propertyID: existing[0]["_id"],
                             pageurl: clientData[0],
@@ -247,7 +247,7 @@ MongoClient.connect(uri, function (err, client) {
             handler: async function (request, h) {
                 let body = request.payload;
                 let uid = await verifyToken(body.auth);
-                console.log(body, uid);
+                //console.log(body, uid);
                 
                 if (uid) {
                     
@@ -255,7 +255,7 @@ MongoClient.connect(uri, function (err, client) {
                     let existing = await propertiesDB.find({
                         domain: body.domain
                     }).toArray();
-                    console.log(existing)
+                   // console.log(existing)
                     if (existing.length > 0) {
                         return h.response({
                             success: false,
@@ -264,7 +264,7 @@ MongoClient.connect(uri, function (err, client) {
                         
                     } else {
                         let exclude = []
-                        console.log(body.exclude, "exlcude info")
+                       // console.log(body.exclude, "exlcude info")
                         if (body.exclude && body.exclude.length > 0) {
                             
                             exclude = body.exclude
@@ -312,7 +312,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+               // console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -420,7 +420,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+              //  console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -480,7 +480,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+               // console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -539,7 +539,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+               // console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -598,7 +598,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+             //  console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -658,7 +658,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+              //  console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -718,7 +718,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+              //  console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -778,7 +778,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+                //console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -841,7 +841,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.propertyID, uid);
+              //  console.log(request.params.propertyID, uid);
                 if (uid || body.key) {
                     let property = await getProperty(request.params.propertyID)
                     if (property) {
@@ -902,7 +902,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.uid, uid);
+              //  console.log(request.params.uid, uid);
                 if (uid && uid == request.params.uid) {
                     
                     return h.response({
@@ -932,7 +932,7 @@ MongoClient.connect(uri, function (err, client) {
                     }).code(401);
                 }
                 let uid = await verifyToken(body.auth);
-                console.log(request.params.uid, uid);
+               // console.log(request.params.uid, uid);
                 if (uid && uid == request.params.uid) {
                     let data = await client.db("analyticsDB").collection("properties").find({
                         access: uid
@@ -943,7 +943,7 @@ MongoClient.connect(uri, function (err, client) {
                     for (const a of data) { 
                         let dataDB = await getDataForProperty(a["_id"], oneWeekAgo)
                         let data = dataDB.data
-                        console.log(data.length, a["_id"])
+                       // console.log(data.length, a["_id"])
                         let views = dataProcessors.getViewsFromData(data, a.domain)
                          a.stats = views
                         result.push(a)
