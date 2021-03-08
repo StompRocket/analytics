@@ -21,6 +21,7 @@
     "@hapi/hapi": "^20.1.0",
     "@hapi/inert": "^6.0.3",
     "agenda": "^4.0.1",
+    "async": "^3.2.0",
     "crypto-js": "^4.0.0",
     "esbuild": "^0.8.45",
     "firebase-admin": "^9.5.0",

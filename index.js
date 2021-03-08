@@ -10,6 +10,7 @@ const apis = require("./apis.js")
 const helpers = require("./helpers.js")
 const MongoClient = require('mongodb').MongoClient;
 const uri = `mongodb+srv://app:${keys.mongo.pass}@cluster0.zejsy.mongodb.net/analyticsDB?retryWrites=true&w=majority`;
+const async = require("async")
 var admin = require("firebase-admin");
 var uuid = require('uuid');
 var serviceAccount = require("./private/fb.json");
@@ -28,8 +29,21 @@ MongoClient.connect(uri, function (err, client) {
     //verifyToken("test")
     // perform actions on the collection object
     
-    
+    function filterStringForArray(string, array) {
+      let result = true
+      
+      array.forEach(a => {
+        if (string.toLowerCase().indexOf(a.toLowerCase()) > -1) {
+          result = false
+        }
+        //console.log(result, string)
+      })
+     
+      //console.log(t1 - t0, 'milliseconds');
+      return result
+    }
     async function getDataForProperty(propertyID, from, to) {
+      console.time('get data');
         const dataDB = client.db("analyticsDB").collection("views");
         let data = [];
         let start = from || new Date(2021, 1, 1).toISOString()
@@ -46,6 +60,15 @@ MongoClient.connect(uri, function (err, client) {
         } catch {
             data = []
         }
+        let origional = data.length
+        
+        console.time('bot cleaner');
+        data = data.filter((a) => {
+         return filterStringForArray(a.userAgent, ["Webflow", "Googlebot", "Mediapartners-Google", "AdsBot-Google", "Bingbot", "Slurp", "DuckDuckBot", "Baiduspider", "YandexBot", "facebot", "facebookexternalhit", "ia_archiver"])
+        })
+        console.timeEnd('bot cleaner');
+        console.timeEnd('get data')
+        console.log(origional - data.length, "bots")
         return {
             data: data,
             from: start,
@@ -337,7 +360,7 @@ MongoClient.connect(uri, function (err, client) {
                         return h.response({
                             success: false,
                             error: "property doesn't exist"
-                        }).code(401);
+                        }).code(404);
                     }
                 } else {
                     return h.response({
