@@ -43,7 +43,8 @@ MongoClient.connect(uri, function (err, client) {
       return result
     }
     async function getDataForProperty(propertyID, from, to) {
-      console.time('get data');
+      let opID = uuid.v4()
+      console.time(`get data (${opID})`);
         const dataDB = client.db("analyticsDB").collection("views");
         let data = [];
         let start = from || new Date(2021, 1, 1).toISOString()
@@ -62,12 +63,12 @@ MongoClient.connect(uri, function (err, client) {
         }
         let origional = data.length
         
-        console.time('bot cleaner');
+        console.time(`bot cleaner (${opID})`);
         data = data.filter((a) => {
          return filterStringForArray(a.userAgent, ["Webflow", "Googlebot", "Mediapartners-Google", "AdsBot-Google", "Bingbot", "Slurp", "DuckDuckBot", "Baiduspider", "YandexBot", "facebot", "facebookexternalhit", "ia_archiver"])
         })
-        console.timeEnd('bot cleaner');
-        console.timeEnd('get data')
+        console.timeEnd(`bot cleaner (${opID})`);
+        console.timeEnd(`get data (${opID})`)
         console.log(origional - data.length, "bots")
         return {
             data: data,
