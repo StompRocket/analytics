@@ -7,7 +7,7 @@ function getPagesFromData (data) {
     let pagesOBJ = {}
     let totalViews = 0
     data.forEach(view => {
-        let url = helpers.getURLComponents(view.pageurl)
+        let url = helpers.getURLComponents(view.pageurl, true)
         if (pagesOBJ[url.page]) {
             pagesOBJ[url.page].count++
         } else {
@@ -35,23 +35,43 @@ function getRefferersFromData(data, domain) {
     }
     let pagesOBJ = {}
     let totalViews = 0
+    //console.log(data)
     data.forEach(view => {
+      //console.log(view)
         if (view.refferer && view.refferer.length > 1) {
-            let url = helpers.getURLComponents(view.refferer)
-            //console.log(url.hostname, property.domain)
+          let url = helpers.getURLComponents(view.refferer)
+          //console.log(url.hostname, url, view.refferer)
+            var cleanRefferer = view.refferer.replace(/\/+$/, '')
             if (url.hostname != domain && url.url.length > 1) {
-                if (pagesOBJ[view.refferer]) {
-                    pagesOBJ[view.refferer].count++
+                if (pagesOBJ[cleanRefferer]) {
+                    pagesOBJ[cleanRefferer].count++
                 } else {
-                    pagesOBJ[view.refferer] = {
-                        url: view.refferer,
+                    pagesOBJ[cleanRefferer] = {
+                        url: cleanRefferer,
                         count: 1
                     }
                 }
                 totalViews++
             }
         }
-        
+        let viewURL = helpers.getURLComponents(view.pageurl)
+        let ref = helpers.getQueryStringParams("r", view.pageurl)
+
+        //console.log("current view url", viewURL.page, ref)
+       if (ref) {
+        // console.log(ref)
+         
+          if (pagesOBJ[ref]) {
+              pagesOBJ[ref].count++
+          } else {
+              pagesOBJ[ref] = {
+                  url: ref,
+                  count: 1
+              }
+          }
+          totalViews++
+      
+       }
         
         
     })
